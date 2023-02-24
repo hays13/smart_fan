@@ -1,0 +1,259 @@
+#:kivy 2.1.0
+
+
+<LoginScreen>:
+    name: 'login'
+    GridLayout:
+        cols: 1
+        padding: 50
+        spacing: 10
+        size_hint: (0.8, 0.8)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.8}
+
+        Label:
+            text: 'Login'
+            font_size: 24
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, 0.2)
+
+            Label:
+                text: 'Username: '
+                size_hint_x: 0.25
+                font_size: 20
+
+            TextInput:
+                id: username
+                multiline: False
+                font_size: 20
+                size_hint_x: 0.75
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: (1, 0.2)
+
+            Label:
+                text: 'Password: '
+                size_hint_x: 0.25
+                font_size: 20
+
+            TextInput:
+                id: password
+                multiline: False
+                password: True
+                font_size: 20
+                size_hint_x: 0.75
+
+
+
+
+<FanControlScreen>:
+    name: 'fan_control'
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: root.width * 0.1, root.height * 0.1
+
+        Label:
+            text: 'Fan Control'
+            font_size: 36
+
+        Button:
+            text: 'Temperature Range'
+            font_size: 28
+            on_press: app.root.current = 'temp_range'
+
+        BoxLayout:
+            orientation: 'horizontal'
+
+            Button:
+                text: 'Off'
+                font_size: 28
+                on_press: root.fan_off()
+
+            Slider:
+                id: fan_slider
+                min: 0
+                max: 100
+                value: 0
+                step: 25
+            
+
+            Button:
+                text: 'On'
+                font_size: 28
+                on_press: root.fan_on()
+
+        Button:
+            text: 'Schedule'
+            font_size: 28
+            on_press: app.root.current = 'schedule'
+
+    Label:
+        id: fan_percentage
+        text: 'Fan Power: %s %%' %int(fan_slider.value)
+        pos_hint: {'center_x': 0.5, 'center_y': 0.45}
+        font_size: 20
+
+<TemperatureRangeScreen>:
+    name: 'temp_range'
+
+    BoxLayout:
+        orientation: 'vertical'
+
+        Label:
+            id: current_temperature_label
+            text: 'Current Temperature:'
+
+        Label:
+            id: current_humidity_label
+            text: 'Current Humidity:'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.3
+
+            Label:
+                text: 'Temperature Range:'
+
+            Label:
+                text: 'Min:'
+
+            Slider:
+                id: temp_min_slider
+                min: 0
+                max: 40
+                value: 20
+
+            Label:
+                text: 'Max:'
+
+            Slider:
+                id: temp_max_slider
+                min: 0
+                max: 40
+                value: 30
+
+        Button:
+            text: 'Back'
+            on_press: app.root.current = 'fan_control'
+
+    
+
+<CustomLabel@Label>:
+    font_size: '20sp'
+    color: 0, 0, 0, 1
+    size_hint: (1, None)
+    height: self.texture_size[1]
+
+<ScheduleScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 10
+        spacing: 10
+
+        Button:
+            text: 'Back'
+            font_size: 20
+            size_hint_y: None
+            height: 50
+            on_press: app.root.current = 'fan_control'
+
+        Label:
+            text: 'Schedule'
+            font_size: '30sp'
+            bold: True
+
+        GridLayout:
+            cols: 2
+            spacing: 10
+            padding: 10
+
+            Label:
+                text: 'Start Time'
+                halign: 'right'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: 5
+
+                Spinner:
+                    id: start_time_hour
+                    text: 'Hour'
+                    values: [str(i) for i in range(1, 13)]
+                    size_hint_x: None
+                    width: 80
+
+                Spinner:
+                    id: start_time_minute
+                    text: 'Minute'
+                    values: [str(i).zfill(2) for i in range(0, 60, 15)]
+                    size_hint_x: None
+                    width: 80
+
+                Spinner:
+                    id: start_time_am_pm
+                    text: 'AM/PM'
+                    values: ['AM', 'PM']
+                    size_hint_x: None
+                    width: 80
+
+            Label:
+                text: 'End Time'
+                halign: 'right'
+
+            BoxLayout:
+                orientation: 'horizontal'
+                spacing: 5
+
+                Spinner:
+                    id: end_time_hour
+                    text: 'Hour'
+                    values: [str(i) for i in range(1, 13)]
+                    size_hint_x: None
+                    width: 80
+
+                Spinner:
+                    id: end_time_minute
+                    text: 'Minute'
+                    values: [str(i).zfill(2) for i in range(0, 60, 15)]
+                    size_hint_x: None
+                    width: 80
+
+                Spinner:
+                    id: end_time_am_pm
+                    text: 'AM/PM'
+                    values: ['AM', 'PM']
+                    size_hint_x: None
+                    width: 80
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: 50
+            spacing: 10
+
+            Button:
+                text: 'Add'
+                size_hint_x: None
+                width: 80
+                on_press: root.add_schedule()
+
+            Button:
+                text: 'Remove'
+                size_hint_x: None
+                width: 80
+                on_press: root.remove_schedule()
+
+        ScrollView:
+            GridLayout:
+                id: schedule_grid
+                cols: 2
+                spacing: 10
+                padding: 10
+                size_hint_y: None
+                height: self.minimum_height
+                row_default_height: '40dp'
+                row_force_default: True
+
