@@ -1,13 +1,17 @@
-import requests, datetime
+import requests, datetime, kivy
 from machine import Timer
-
+from kivy.network.urlrequest import UrlRequest
 
 def set_fan_speed(fan_speed):
     # send corresponding fan speed to power relay
     # push current fan_speed value to server
+    url = 'http://172.20.10.8/fan_speed={}/'.format(fan_speed)
+    #try:
+    #    UrlRequest.post(url)
+    #except:
+    #    print("cannot connect to server")
     
     
-    return
 
 def get_time():
     t = datetime.datetime.now()
@@ -67,7 +71,7 @@ def read_sensor(timer):
         set_fan_speed(0)
         return
         # send fan speed to server
-    # unsure of format of schedules: assuming an input of a 2D array schedule = [[start, end], ...]
+    # unsure of format of schedules: assuming an input of a 2D array schedule = [[start, end], ...]  [11:15, 13:30]
     if len(schedule) > 0: # if there is a schedule set
         fan_counter = 0
         for s in range(len(schedule)):
@@ -101,7 +105,7 @@ def read_fundamentals(timer):
     # requesting status fan speed
     # read fan_speed from server, then send the corresponding speed to the relay (calling the corresponding mode)
     SERVER = 'http://172.20.10.8'
-    result = requests.get(SERVER)
+    result = UrlRequest.get(SERVER)
     resultList = result.split("/")
     
     fan_speed = [s.split('=')[1] for s in resultList if "speed=" in s]
