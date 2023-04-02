@@ -6,12 +6,10 @@ def set_fan_speed(fan_speed):
     # send corresponding fan speed to power relay
     # push current fan_speed value to server
     url = 'http://172.20.10.8/fan_speed={}/'.format(fan_speed)
-    #try:
-    #    UrlRequest.post(url)
-    #except:
-    #    print("cannot connect to server")
-    
-    
+    try:
+        UrlRequest.post(url)
+    except:
+        print("cannot connect to server")
 
 def get_time():
     t = datetime.datetime.now()
@@ -50,26 +48,24 @@ def read_sensor(timer):
     curr_hour, curr_min = get_time()
     curr_time = curr_hour * 60 + curr_min
     
+    on_counter = 0
+    
     # if statements to determine what values to change
     if currTemp > maxTemp:
         # turn on fan
-        set_fan_speed(50)
-        return
+        on_counter += 1
         # send fan speed to server
     elif currTemp < minTemp:
         # turn off fan
-        set_fan_speed(0)
-        return
+        pass
         # send fan speed to server
     if currHumd > maxHumd:
         # turn on fan
-        set_fan_speed(50)
-        return
+        on_counter += 1
         # send fan speed to server
     elif currHumd < minHumd:
         # turn off fan
-        set_fan_speed(0)
-        return
+        pass
         # send fan speed to server
     # unsure of format of schedules: assuming an input of a 2D array schedule = [[start, end], ...]  [11:15, 13:30]
     if len(schedule) > 0: # if there is a schedule set
@@ -92,14 +88,19 @@ def read_sensor(timer):
                 fan_counter += 1
         if fan_counter > 0:
             # turn on fan
-            set_fan_speed(50) # should check if there is an existing value that would get set again
-            return
+            on_counter += 1
             # send fan speed to server
         else:
             # turn off fan
-            set_fan_speed(0)
-            return
+            pass
             # send fan speed to server
+            
+    if on_counter > 0:
+        set_fan_speed(50)
+        return
+    else:
+        set_fan_speed(0)
+        return
 
 def read_fundamentals(timer):
     # requesting status fan speed
