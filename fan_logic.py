@@ -38,7 +38,7 @@ def read_sensor(sensor):
     
     return temperature, humidity
 
-def read_sensor(timer):
+def read_server(timer):
     #################################################
     # turning on fan equals setting fan speed to 50 #
     # turning off fan equals setting fan speed to 0 #
