@@ -38,6 +38,32 @@ def read_sensor(sensor):
     
     return temperature, humidity
 
+def schedule_control(schedule, curr_time):
+    fan_counter = 0
+    if len(schedule) > 0: # if there is a schedule set
+        for s in range(len(schedule)):
+            start = int(schedule[s][0])
+            end = int(schedule[s][1])
+            # converts start time to minutes
+            start = start.split(':')
+            start_hour = int(start[0])
+            start_min = int(start[1])
+            start_val = start_hour * 60 + start_min
+            # converts end time to minutes
+            end = end.split(':')
+            end_hour = int(end[0])
+            end_min = int(end[1])
+            end_val = end_hour * 60 + end_min
+            
+            if  curr_time > start_val and curr_time < end_val:
+                fan_counter += 1
+        if fan_counter > 0:
+            # turn on fan
+            return 1
+        else:
+            # turn fan off
+            return -1
+
 def read_server(timer):
     #################################################
     # turning on fan equals setting fan speed to 50 #
@@ -91,27 +117,13 @@ def read_server(timer):
             off_counter += 1
         
     # assuming an input of a 2D array schedule = [[start, end], ...] (ie. [11:15, 13:30])
-    fan_counter = 0
-    if len(schedule) > 0: # if there is a schedule set
-        for s in range(len(schedule)):
-            start = int(schedule[s][0])
-            end = int(schedule[s][1])
-            # converts start time to minutes
-            start = start.split(':')
-            start_hour = int(start[0])
-            start_min = int(start[1])
-            start_val = start_hour * 60 + start_min
-            # converts end time to minutes
-            end = end.split(':')
-            end_hour = int(end[0])
-            end_min = int(end[1])
-            end_val = end_hour * 60 + end_min
-            
-            if  curr_time > start_val and curr_time < end_val:
-                fan_counter += 1
-        if fan_counter > 0:
-            # turn on fan
-            on_counter += 1
+    fan_counter = schedule_control(schedule, curr_time)
+    if fan_counter == 1:
+        on_counter += 1
+    elif fan_counter == -1:
+        off_counter += 1
+    else:
+        print("Error controlling fan")
             
     if on_counter > 0:
         # turns on fan
