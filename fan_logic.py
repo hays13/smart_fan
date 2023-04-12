@@ -10,13 +10,14 @@ def set_fan_speed(fan_speed):
     resultList = result.split("/")
     
     fan_speed_server = [s.split('=')[1] for s in resultList if "speed=" in s][0]
-    if fan_speed:
-        if fan_speed_server > 0:
-            url = '{}/speed={}/'.format(SERVER, fan_speed_server)
-        else:
-            url = '{}/speed={}/'.format(SERVER, fan_speed)
-    else:
+    if fan_speed == 50: #turns on fan
         url = '{}/speed={}/'.format(SERVER, fan_speed)
+    elif fan_speed == 1: #retains current speed
+        url = '{}/speed={}/'.format(SERVER, fan_speed_server)
+    elif fan_speed == 0: #turns off fan
+        url = '{}/speed={}/'.format(SERVER, fan_speed)
+    else:
+        print("Problem updating fan_speed")
     # posts to server
     try:
         UrlRequest.post(url)
@@ -68,27 +69,30 @@ def read_sensor(timer):
     curr_time = curr_hour * 60 + curr_min
     
     on_counter = 0
+    off_counter = 0
     
     # if statements to determine what values to change
-    if currTemp > maxTemp:
-        # turn on fan
-        on_counter += 1
+    if ~(maxTemp == None) and ~(minTemp == None):
+        if currTemp > maxTemp:
+            # turn on fan
+            on_counter += 1
+        
+        elif currTemp < minTemp:
+            # turn off fan
+            off_counter += 1
     
-    elif currTemp < minTemp:
-        # turn off fan
-        pass
-        
-    if currHumd > maxHumd:
-        # turn on fan
-        on_counter += 1
-        
-    elif currHumd < minHumd:
-        # turn off fan
-        pass
+    if ~(maxHumd == None) and ~(minHumd == None):
+        if currHumd > maxHumd:
+            # turn on fan
+            on_counter += 1
+            
+        elif currHumd < minHumd:
+            # turn off fan
+            off_counter += 1
         
     # assuming an input of a 2D array schedule = [[start, end], ...] (ie. [11:15, 13:30])
+    fan_counter = 0
     if len(schedule) > 0: # if there is a schedule set
-        fan_counter = 0
         for s in range(len(schedule)):
             start = int(schedule[s][0])
             end = int(schedule[s][1])
@@ -112,11 +116,11 @@ def read_sensor(timer):
     if on_counter > 0:
         # turns on fan
         set_fan_speed(50)
-        return
-    else:
+    elif off_counter > 0:
         # turns of fan
         set_fan_speed(0)
-        return
+    else:
+        set_fan_speed(1)
 
 if __name__ == "__main__":
     T0 = Timer(0)
