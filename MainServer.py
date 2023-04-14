@@ -59,8 +59,8 @@ class DCMotor:
 
 def schedule_control(schedule, curr_time):
     fan_counter = 0
-    if len(schedule) > 0: # if there is a schedule set
-        for s in range(len(schedule)):
+     # if there is a schedule set
+    for s in range(len(schedule)):
             start = int(schedule[s][0])
             end = int(schedule[s][1])
             # converts start time to minutes
@@ -76,12 +76,12 @@ def schedule_control(schedule, curr_time):
             
             if  curr_time > start_val and curr_time < end_val:
                 fan_counter += 1
-        if fan_counter > 0:
-            # turn on fan
-            return 1
-        else:
-            # turn fan off
-            return -1
+    if fan_counter > 0:
+        # turn on fan
+        return 1
+    else:
+        # turn fan off
+        return -1
 
 def read_sensor(sensor):
     sensor.measure()
@@ -156,13 +156,21 @@ s = socket.socket()
 s.bind(addr)
 s.listen(1)
 
-frequency = 15000       
+frequency = 15000
+fan_speed = 0
 pin1 = Pin(12, Pin.OUT)    
 pin2 = Pin(13, Pin.OUT)     
 enable = PWM(Pin(15), frequency)  
-dc_motor = DCMotor(pin1, pin2, enable)    
-
+dc_motor = DCMotor(pin1, pin2, enable)
+scedule_toggle = 0
+fan_counter = 0
+sensor = dht.DHT22(Pin(14, Pin.IN, Pin.PULL_UP))
 schedule_count = 0
+schedule = []
+minHumd = 0
+maxHumd = 100000
+minTemp = 0
+maxTemp = 100000
 while(True):
     #print("WHILE----------------------------------")
     client, addr = s.accept()
@@ -180,31 +188,45 @@ while(True):
                     dc_motor.forward(fan_speed)
                 elif(fan_speed <= 0):
                     dc_motor.stop()
-                
-                #print("LINE1: \n")
-                #print(line)
-                #print("LINE2: \n")
-                #print(line.decode())
-                #print("LINE3: \n")
-                #print(line.decode().split("/"))
-                '''line_list = line.decode().split("/")
-                for element in line_list:
-                    if '=' in element:
-                        #if ' ' in element:
-                            #element2 = element.split(" ")
-                            #print(element)
-                        print(element)'''
-                        
-    #client.send(web_page())
-    ### temp={}/humidity={}/speed={}/schedule={}/maxHumd={}/minHumd{}/maxTemp={}/minTemp={}, (temp, humd, speed, schedule, maxHumd, minHumd, maxTemp, minTemp)
-    sensor = dht.DHT22(Pin(14, Pin.IN, Pin.PULL_UP))
-    current_temp, current_hum = read_sensor(sensor)
-#   client.send("HTTP/1.1 200 OK\nDate: Mon, 27 Jul 2009 12:28:53 GMT\nServer: Apache/2.2.14 (Win32)\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\nContent-Length: 88\nContent-Type: text/html\nConnection: Closed\n\ntemp={}/humidity={}/speed={}/schedule={}/maxHumd={}/minHumd{}/maxTemp={}/minTemp={}".format(current_temp, current_hum, speed, schedule, maxHumd, minHumd, maxTemp, minTemp))
-    #print(web_page())
+                current_temp, current_hum = read_sensor(sensor)
+                client.send("HTTP/1.1 200 OK\nDate: Mon, 27 Jul 2009 12:28:53 GMT\nServer: Apache/2.2.14 (Win32)\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\nContent-Length: 88\nContent-Type: text/html\nConnection: Closed\n\ntemp={}/humidity={}/speed={}/schedule={}/maxHumd={}/minHumd{}/maxTemp={}/minTemp={}".format(current_temp, current_hum, fan_speed, schedule, maxHumd, minHumd, maxTemp, minTemp))
+                ### temp={}/humidity={}/speed={}/schedule={}/maxHumd={}/minHumd{}/maxTemp={}/minTemp={}, (temp, humd, speed, schedule, maxHumd, minHumd, maxTemp, minTemp)
     client.close()
         
         
         
+    
+    update_time(rtc)
+    year, month, day, weekday, hours, minutes, seconds, subseconds = rtc.datetime()
+    
+    schedule_toggle = fan_counter
+    if len(schedule) > 0 and schedule != []:
+        fan_counter = schedule_control(schedule, hours*60+minutes)
+    if schedule != []:
+        print("schedule_control({},{}) = {}".format(schedule,hours*60+minutes,fan_counter))
+    if fan_counter != schedule_toggle:
+        if fan_counter == 1:
+            if fan_speed == 0:
+                fan_speed = 20
+        else:
+            fan_speed = 0
+    
+    current_temp, current_hum = read_sensor(sensor)
+    if current_temp > maxTemp:
+        # turn on fan
+        if fan_speed == 0:
+            fan_speed = 20
+    elif current_temp < minTemp:
+        # turn off fan
+        fan_speed = 0
+    elif current_hum > maxHumd:
+        # turn on fan
+        if fan_speed == 0:
+            fan_speed = 20
+    elif current_hum < minHumd:
+        # turn off fan
+        fan_speed = 0   
+    
     print("FANNNNNNN : " + str(fan_speed))    
     if(fan_speed > 0):
         dc_motor.forward(fan_speed)
@@ -213,20 +235,6 @@ while(True):
         dc_motor.stop()
         print("OFF")
             
-    update_time(rtc)
-    year, month, day, weekday, hours, minutes, seconds, subseconds = rtc.datetime()
-    #fan_counter = schedule_control(schedule, hours*60+minutes)
-    '''if fan_counter == 1:
-        if schedule_count == 0:
-            set_fan_speed(50)
-            schedule_count += 1
-            dc_motor.forward(50) 
-    elif fan_counter == -1:
-        if schedule_count > 0:
-            schedule_count = 0
-            dc_motor.stop()
-    else:
-        print("Error controlling fan")'''
 
 '''
 #Example code
