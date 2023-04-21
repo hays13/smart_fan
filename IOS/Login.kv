@@ -1,0 +1,62 @@
+#:kivy 2.0.0
+<ClickableTextFieldRound>:
+    size_hint_y: None
+    height: text_field.height
+
+    MDTextField:
+        id: text_field
+        hint_text: root.hint_text
+        text: root.text
+        password: True
+        icon_left: "key-variant"
+
+    MDIconButton:
+        icon: "eye-off"
+        pos_hint: {"center_y": .5}
+        pos: text_field.width - self.width + dp(8), 0
+        theme_text_color: "Hint"
+        on_release:
+            self.icon = "eye" if self.icon == "eye-off" else "eye-off"
+            text_field.password = False if text_field.password is True else True
+
+<Login>: 
+    MDScreen:
+        name: "login"
+        orientation: 'vertical'
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: None
+            pos_hint: {"center_x": 0.5, "center_y": 0.8}
+            height: "180dp"
+            Image:
+                source: "app-icon.png"
+        
+        MDLabel:
+            text: "Welcome!"
+            halign: "center"
+            pos_hint: {"center_x": 0.5, "center_y": 0.6}
+            font_style: "H4"
+            theme_text_color: "Primary"
+
+
+        MDTextField:
+            mode: "round"
+            id: username
+            hint_text: "Username"
+            icon_right: "account"
+            icon_right_color: app.theme_cls.primary_color
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            size_hint_x: None
+            width: "300dp"
+
+        ClickableTextFieldRound:
+            id: password
+            size_hint_x: None
+            width: "300dp"
+            hint_text: "Password"
+            pos_hint: {"center_x": .5, "center_y": .4}
+
+        MDRaisedButton:
+            text: "Login"
+            pos_hint: {"center_x": 0.5, "center_y": 0.3}
+            on_release: root.current.on_login()
