@@ -1,5 +1,6 @@
 from kivymd.app import MDApp
 from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.metrics import sp
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.screenmanager import MDScreenManager
@@ -16,189 +17,28 @@ from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.anchorlayout import MDAnchorLayout
 from ctypes import windll, c_int64
 from kivymd.uix.expansionpanel import MDExpansionPanel, MDExpansionPanelOneLine
+from kivy.storage.dictstore import DictStore
+from kivy.storage.jsonstore import JsonStore
+from kivy.network.urlrequest import UrlRequest
+from kivy.clock import Clock
 # windll.user32.SetProcessDpiAwarenessContext(c_int64(-4))
+
+
+
+
+
+def parseData(self, result):
+    global current_temp, current_hum
+    resultList = result.split("/")
+    current_temp = [s.split('=')[1] for s in resultList if "temp=" in s][0]
+    current_hum = [s.split('=')[1] for s in resultList if "humidity=" in s][0]
+
 
 
 
 class RangeSliderApp(BoxLayout):
     pass
 
-class RangeSlider(Widget):
-
-    def _get_value(self):
-        return [self.value1, self.value2]
-    def _set_value(self, value):
-        self.value1, self.value2 = value
-
-    value = AliasProperty(_get_value, _set_value, bind=('value1', 'value2'))
-    value1 = NumericProperty(0.)
-    value2 = NumericProperty(100.)
-
-    min = NumericProperty(0.)
-    max = NumericProperty(100.)
-
-    padding = NumericProperty(sp(16))
-    orientation = OptionProperty('horizontal', options=(
-        'vertical', 'horizontal'))
-
-    range = ReferenceListProperty(min, max)
-    step = BoundedNumericProperty(0, min=0)
-
-    def on_min(self, *largs):
-        self.value1 = min(self.max, max(self.min, self.value1))
-        self.value2 = min(self.max, max(self.min, self.value2))
-
-    def on_max(self, *largs):
-        self.value1 = min(self.max, max(self.min, self.value1))
-        self.value2 = min(self.max, max(self.min, self.value2))
-
-    def get_norm_value1(self):
-        vmin = self.min
-        d = self.max - vmin
-        if d == 0:
-            return 0
-        return (self.value1 - vmin) / float(d)
-
-    def get_norm_value2(self):
-        vmin = self.min
-        d = self.max - vmin
-        if d == 0:
-            return 0
-        return (self.value2 - vmin) / float(d)
-
-    def set_norm_value1(self, value):
-        vmin = self.min
-        step = self.step
-        val = value * (self.max - vmin) + vmin
-        if step == 0:
-            self.value1 = val
-        else:
-            self.value1 = min(round((val - vmin) / step) * step + vmin,
-                              self.max)
-
-    def set_norm_value2(self, value):
-        vmin = self.min
-        step = self.step
-        val = value * (self.max - vmin) + vmin
-        if step == 0:
-            self.value2 = val
-        else:
-            self.value2 = min(round((val - vmin) / step) * step + vmin,
-                              self.max)
-
-    value1_normalized = AliasProperty(get_norm_value1, set_norm_value1,
-                                      bind=('value1', 'min', 'max', 'step'))
-    value2_normalized = AliasProperty(get_norm_value2, set_norm_value2,
-                                      bind=('value2', 'min', 'max', 'step'))
-
-    def get_value1_pos(self):
-        padding = self.padding
-        x = self.x
-        y = self.y
-        nval = self.value1_normalized
-        if self.orientation == 'horizontal':
-            return (x + padding + nval * (self.width - 2 * padding), y)
-        else:
-            return (x, y + padding + nval * (self.height - 2 * padding))
-
-    def get_value2_pos(self):
-        padding = self.padding
-        x = self.x
-        y = self.y
-        nval = self.value2_normalized
-        if self.orientation == 'horizontal':
-            return (x + padding + nval * (self.width - 2 * padding), y)
-        else:
-            return (x, y + padding + nval * (self.height - 2 * padding))
-
-    def set_value1_pos(self, pos):
-        padding = self.padding
-        x = min(self.right - padding, max(pos[0], self.x + padding))
-        y = min(self.top - padding, max(pos[1], self.y + padding))
-        if self.orientation == 'horizontal':
-            if self.width == 0:
-                self.value1_normalized = 0
-            else:
-                self.value1_normalized = (x - self.x - padding
-                                          ) / float(self.width - 2 * padding)
-        else:
-            if self.height == 0:
-                self.value1_normalized = 0
-            else:
-                self.value1_normalized = (y - self.y - padding
-                                          ) / float(self.height - 2 * padding)
-
-    def set_value2_pos(self, pos):
-        padding = self.padding
-        x = min(self.right - padding, max(pos[0], self.x + padding))
-        y = min(self.top - padding, max(pos[1], self.y + padding))
-        if self.orientation == 'horizontal':
-            if self.width == 0:
-                self.value2_normalized = 0
-            else:
-                self.value2_normalized = (x - self.x - padding
-                                          ) / float(self.width - 2 * padding)
-        else:
-            if self.height == 0:
-                self.value2_normalized = 0
-            else:
-                self.value2_normalized = (y - self.y - padding
-                                          ) / float(self.height - 2 * padding)
-
-    value1_pos = AliasProperty(get_value1_pos, set_value1_pos,
-                               bind=('x', 'y', 'width', 'height', 'min',
-                                     'max', 'value1_normalized', 'orientation'))
-    value2_pos = AliasProperty(get_value2_pos, set_value2_pos,
-                               bind=('x', 'y', 'width', 'height', 'min',
-                                     'max', 'value2_normalized', 'orientation'))
-
-    def _touch_normalized_value(self, touch):
-        if self.collide_point(touch.x, touch.y):
-            pos = touch.pos
-            padding = self.padding
-            x = min(self.right - padding, max(pos[0], self.x + padding))
-            y = min(self.top - padding, max(pos[1], self.y + padding))
-            if self.orientation == 'horizontal':
-                value = (x - self.x - padding
-                        ) / float(self.width - 2 * padding)
-            else:
-                value = (y - self.y - padding
-                        ) / float(self.height - 2 * padding)
-            return value
-
-    def on_touch_down(self, touch):
-        if self.collide_point(touch.x, touch.y):
-            if self.disabled or not self.collide_point(*touch.pos):
-                return
-            touch.grab(self)
-            t_value = self._touch_normalized_value(touch)
-            if abs(self.value1_normalized - t_value) < abs(self.value2_normalized - t_value):
-                self.value1_pos = touch.pos
-                touch.ud['cursorid'] = 1
-            else:
-                self.value2_pos = touch.pos
-                touch.ud['cursorid'] = 2
-            return True
-
-    def on_touch_move(self, touch):
-        if self.collide_point(touch.x, touch.y):
-            if touch.grab_current == self:
-                if 'cursorid' in touch.ud:
-                    if touch.ud['cursorid'] == 1:
-                        self.value1_pos = touch.pos
-                        if self.value1 > self.value2:
-                            self.value1_pos = self.value2_pos
-                    elif touch.ud['cursorid'] == 2:
-                        self.value2_pos = touch.pos
-                        if self.value2 < self.value1:
-                            self.value2_pos = self.value1_pos
-                    return True
-
-    def on_touch_up(self, touch):
-        if self.collide_point(touch.x, touch.y):
-            if touch.grab_current == self:
-                touch.ungrab(self)
-                return True
 
 
 class ClickableTextFieldRound(MDRelativeLayout):
@@ -234,20 +74,90 @@ class LoginScreen(MDScreen):
             self.manager.current = "home_screen"
 
 
+
+
+
 class HomeScreen(MDScreen):
 
-    def controlTheProgress(self, *args):
-        value = args[1]
+    def updateServer(self):
+        url = 'http://172.20.10.8/fan_speed={}/trange_en={}/hrange_en={}/min_temp={}/max_temp={}/min_hum={}/max_hum={}/'.format(int(self.ids.fan_speed.value), bool(self.ids.trange_en.active), bool(self.ids.hrange_en.active), int(self.ids.min_temp.text), int(self.ids.max_temp.text), int(self.ids.min_hum.text), int(self.ids.max_hum.text))
+        print(url)
+        # url_encoded = urllib.parse.quote(url, safe=':/')
+        try:
+            request = UrlRequest(url, method='POST')
+        except:
+            print("cannot connect to server")
+    
+    def on_pre_enter(self):
+        self.event = Clock.schedule_interval(self.get_data, 1)
+
+    def get_data(self, *args):
+        url = 'http://172.20.10.8/'
+        try:
+            request = UrlRequest(url, on_success=parseData)
+            self.controlTheProgress(current_temp, current_hum)
+        except:
+            print("cannot connect to server")
+
+    def enter_data_view(self):
+        self.event = Clock.schedule_interval(self.get_data, 1)
+    
+    def exit_data_view(self):
+        self.event.cancel()  
+
+    def on_enter(self, *args):
+        self.store = DictStore(filename='settings.ini')
+
+        if self.store.exists('temperature'):
+            temperature_vars = self.store.get('temperature')
+            self.ids.min_temp.text = temperature_vars.get('min_temp', 0)
+            self.ids.max_temp.text = temperature_vars.get('max_temp', 0)
         
-        # control angle end value via progress attribute
-        self.ids.circular_progress_top.progress = value
+        if self.store.exists('humidity'):
+            humidity_vars = self.store.get('humidity')
+            self.ids.min_hum.text = humidity_vars.get('min_hum', 0)
+            self.ids.max_hum.text = humidity_vars.get('max_hum', 0)
+
+        if self.store.exists('range_enabled'):
+            range_vars = self.store.get('range_enabled')
+            self.ids.trange_en.active = range_vars.get('trange_en', False)
+            self.ids.hrange_en.active = range_vars.get('hrange_en', False)
+
+        if self.store.exists('fan_speed'):
+            fan_vars = self.store.get('fan_speed')
+            self.ids.fan_speed.value = fan_vars.get('fan_speed', 0)
+        
+        if self.store.exists('schedule'):
+            schedule_vars = self.store.get('schedule')
+            schedule_list = schedule_vars.get('schedule', 0).split(",")
+            for schedule in schedule_list:
+                if schedule != "":
+                    self.ids.schedule_list.add_widget(ListItemWithCheckbox(text=schedule))
+            
+
+    def save_settings(self):
+        
+        self.store.put('temperature', min_temp=self.ids.min_temp.text, max_temp=self.ids.max_temp.text)
+        self.store.put('humidity', min_hum=self.ids.min_hum.text, max_hum=self.ids.max_hum.text)
+        self.store.put('range_enabled', trange_en=self.ids.trange_en.active, hrange_en=self.ids.hrange_en.active)
+        self.store.put('fan_speed', fan_speed=self.ids.fan_speed.value)
+        self.store.store_sync()
+        self.updateServer()
+
+
+
+
+    def controlTheProgress(self, temp, hum):
+        
+        # control angle end value via progress attribute 
+        self.ids.circular_progress_top.progress = int(temp)
         # control text progress value
-        self.ids.circular_progress_top.text = f'{int(value/3.6)}°F'
+        self.ids.circular_progress_top.text = f'{int(temp/3.6)}°F'
 
         # control angle end value via progress attribute
-        self.ids.circular_progress_bottom.progress = value
+        self.ids.circular_progress_bottom.progress = int(temp)
         # control text progress value
-        self.ids.circular_progress_bottom.text = f'{int(value/3.6)}%'
+        self.ids.circular_progress_bottom.text = f'{int(hum/3.6)}%'
     
     def show_time_picker(self, step):
         if step == 1:
@@ -267,12 +177,27 @@ class HomeScreen(MDScreen):
         self.time1 = time
         self.show_time_picker(2)
 
+    def sendSchedule(self,schedule):
+        
+        url = 'http://172.20.10.8/schedule={}/'.format(schedule)
+        print(url)
+
+    def save_schedule(self):
+        schedule = ""
+        for child in self.ids.schedule_list.children:
+            print(child.text)
+            schedule += child.text + ","
+        self.store.put('schedule', schedule=schedule)
+        self.sendSchedule(schedule)
+
+
     def on_time2_set(self, time):
         self.time2 = time
         if self.time1 and self.time2:
             time1_str = f"{self.time1.hour:02d}:{self.time1.minute:02d}"
             time2_str = f"{self.time2.hour:02d}:{self.time2.minute:02d}"
-            schedule_item = ListItemWithCheckbox(text=f"{time1_str} - {time2_str}")
+            combo_str = f"{time1_str} - {time2_str}"
+            schedule_item = ListItemWithCheckbox(text=combo_str)
             self.ids.schedule_list.add_widget(schedule_item)
 
         self.time1 = None

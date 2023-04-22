@@ -31,6 +31,7 @@ WindowManager:
             source: 'atlas://data/images/defaulttheme/slider_cursor{}'.format('_disabled' if self.disabled else '')
 
 
+
 <LoginScreen>:
     orientation: 'vertical'
     name: 'login'
@@ -93,6 +94,7 @@ WindowManager:
                 
                 text: 'Data'
                 icon: 'coolant-temperature'
+                on_tab_press: root.enter_data_view()
 
                 FloatLayout:
                     orientation: 'vertical'
@@ -173,26 +175,14 @@ WindowManager:
                             Ellipse:
                                 size: [self.width - 45 ,self.height - 45]
                                 pos: [(self.center_x - (self.width - 45)/2), (self.center_y - (self.height - 45)/2)]
-                            
-                Slider:
-                    orientation: 'horizontal'
-                    min: 0
-                    max: 360
-                    step: 1
-                    
-                    size_hint: None, None
-                    width: 500
-                    height: 200
-                    
-                    pos_hint: {'center_x':.5}
-                    
-                    on_value: root.controlTheProgress(*args)
+
 
             MDBottomNavigationItem:
                 name: 'control_screen'
                 text: 'Controls'
                 icon: 'power-settings'
                 orientation: 'vertical'
+                on_tab_press: root.exit_data_view()
                 MDFloatLayout:
                     orientation: 'vertical'
                     size: root.width, root.height
@@ -218,6 +208,7 @@ WindowManager:
                             halign: "center"
                         
                         MDSlider:
+                            id: fan_speed
                             min: 0
                             max: 100
                             step: 5
@@ -225,14 +216,13 @@ WindowManager:
                             orientation: 'horizontal'
                             md_bg_color: "lightblue"
                             # size_hint_x: 0.4
-                            on_value: root.controlTheProgress(*args)
                             hint: True
                             hint_bg_color: "red"
                             hint_text_color: "white"
                             hint_radius: [6, 0, 6, 0]
-                            
-                            track_color_active: "lightblue"
-                            track_color_inactive: "lightblue"
+                            color: (0.58,0.83,0.93,1)
+                            track_color_active: (0.81,0.11,0.11,1)
+                            track_color_inactive: (0.81,0.11,0.11,1)
 
                         MDIconButton:
                             icon: "fan"
@@ -244,7 +234,7 @@ WindowManager:
                     MDBoxLayout:
                         orientation: 'horizontal'
                         size_hint_y: 0.1
-                        pos_hint: {'center_x':.5, 'center_y':.4}
+                        pos_hint: {'center_x':.5, 'center_y':.5}
                         Widget:
                             size_hint_x: 0.3
 
@@ -253,7 +243,7 @@ WindowManager:
                             color: (0.07,0.07,0.07,1)
 
                         MDSwitch:
-                            id: switch_temp
+                            id: trange_en
                             icon_active: "check"
 
                             track_color_active: "lightblue"
@@ -267,7 +257,7 @@ WindowManager:
                     MDBoxLayout:
                         orientation: 'horizontal'
                         size_hint_y: 0.1
-                        pos_hint: {'center_x':.5, 'center_y':.3}
+                        pos_hint: {'center_x':.5, 'center_y':.4}
                         adaptive_width: True
 
                         # MDLabel:
@@ -275,7 +265,7 @@ WindowManager:
                         #     color: (0.07,0.07,0.07,1)
                         
                         MDTextField:
-                            id: temp_min
+                            id: min_temp
                             hint_text: "Min"
                             input_filter: "int"
                             color_mode: 'custom'
@@ -285,14 +275,14 @@ WindowManager:
                             text_color_normal: (0.58,0.83,0.93,1)
                             text_color_focus: (0,0,0,1)
                             mode: "line"
-                            disabled: not switch_temp.active
+                            disabled: not trange_en.active
                             
                         MDLabel:
                             text: '  to   '
                             color: (0.07,0.07,0.07,1)
                         
                         MDTextField:
-                            id: temp_max
+                            id: max_temp
                             hint_text: "Max"
                             input_filter: "int"
                             color_mode: 'custom'
@@ -302,13 +292,13 @@ WindowManager:
                             text_color_normal: (0.81,0.11,0.11,1)
                             text_color_focus: (0,0,0,1)
                             mode: "line"
-                            disabled: not switch_temp.active
+                            disabled: not trange_en.active
                         
 
                     MDBoxLayout:
                         orientation: 'horizontal'
                         size_hint_y: 0.1
-                        pos_hint: {'center_x':.5, 'center_y':.2}
+                        pos_hint: {'center_x':.5, 'center_y':.3}
                         Widget:
                             size_hint_x: 0.3
 
@@ -317,7 +307,7 @@ WindowManager:
                             color: (0.07,0.07,0.07,1)
 
                         MDSwitch:
-                            id: switch_hum
+                            id: hrange_en
                             icon_active: "check"
 
                             track_color_active: "lightblue"
@@ -331,7 +321,7 @@ WindowManager:
                     MDBoxLayout:
                         orientation: 'horizontal'
                         size_hint_y: 0.1
-                        pos_hint: {'center_x':.5, 'center_y':.1}
+                        pos_hint: {'center_x':.5, 'center_y':.2}
                         adaptive_width: True
 
                         # MDLabel:
@@ -339,7 +329,7 @@ WindowManager:
                         #     color: (0.07,0.07,0.07,1)
                         
                         MDTextField:
-                            id: temp_min
+                            id: min_hum
                             hint_text: "Min"
                             input_filter: "int"
                             color_mode: 'custom'
@@ -349,14 +339,14 @@ WindowManager:
                             text_color_normal: (0.58,0.83,0.93,1)
                             text_color_focus: (0,0,0,1)
                             mode: "line"
-                            disabled: not switch_hum.disabled
+                            disabled: not hrange_en.active
                             
                         MDLabel:
                             text: '  to   '
                             color: (0.07,0.07,0.07,1)
                         
                         MDTextField:
-                            id: temp_max
+                            id: max_hum
                             hint_text: "Max"
                             input_filter: "int"
                             color_mode: 'custom'
@@ -366,49 +356,15 @@ WindowManager:
                             text_color_normal: (0.81,0.11,0.11,1)
                             text_color_focus: (0,0,0,1)
                             mode: "line"
-                            disabled: not switch_hum.disabled
+                            disabled: not hrange_en.active
+                    
+                    MDRoundFlatButton:
+                        text: "Save"
+                        pos_hint: {'center_x':.5, 'center_y':.1}
+                        text_color: (0,0,0,1)
+                        line_color: (0,0,0,1)
+                        on_release: root.save_settings()
                         
-
-
-                    # BoxLayout:
-                    #     pos_hint: {'center_x':.33, 'center_y':.3}
-                    #     padding: 10
-                    #     Label:
-                    #         text: 'Default'
-                    #         color: (0.07,0.07,0.07,1)
-                    #     RangeSlider:
-                    #         id: s_temp
-                    #         size_hint_x: None
-                    #         width: '48dp'
-                    #         orientation: 'vertical'
-                    #         value1: 50
-                    #     BoxLayout:
-                    #         orientation: 'vertical'
-                    #         Label:
-                    #             text: '{}'.format(s_temp.value[1])
-                    #             color: (0.07,0.07,0.07,1)
-                    #         Label:
-                    #             text: '{}'.format(s_temp.value[0])
-                    #             color: (0.07,0.07,0.07,1)
-
-                    #     Label:
-                    #         text: 'Stepped'
-                    #         color: (0.07,0.07,0.07,1)
-                    #     RangeSlider:
-                    #         id: s_hum
-                    #         size_hint_x: None
-                    #         height: '6dp'
-                    #         orientation: 'vertical'
-                    #         step: 20
-                    #         value2: 60
-                    #     Label:
-                    #         text: '{}'.format(s_hum.value[1])
-                    #         color: (0.07,0.07,0.07,1)
-                    #     Label:
-                    #         text: '{}'.format(s_hum.value[0])
-                    #         color: (0.07,0.07,0.07,1)
-
-                            
 
 
             MDBottomNavigationItem:
@@ -417,11 +373,12 @@ WindowManager:
                 text: 'Schedule'
                 icon: 'fan-clock'
                 orientation: 'vertical'
+                on_tab_press: root.exit_data_view()
                 BoxLayout:
                     orientation: "vertical"
                     MDTopAppBar:
                         title: "Scheduling Assistant"
-                        right_action_items: [["clock-plus-outline", lambda x: root.show_time_picker(1)], ["delete", lambda x: root.remove_schedule()]]
+                        right_action_items: [["clock-plus-outline", lambda x: root.show_time_picker(1)], ["delete", lambda x: root.remove_schedule()],  ["content-save", lambda x: root.save_schedule()]]
 
                     ScrollView:
                         MDList:
