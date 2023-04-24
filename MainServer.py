@@ -61,8 +61,8 @@ def schedule_control(schedule, curr_time):
     fan_counter = 0
      # if there is a schedule set
     for s in range(len(schedule)):
-            start = int(schedule[s][0])
-            end = int(schedule[s][1])
+            start = schedule[s][0]
+            end = schedule[s][1]
             # converts start time to minutes
             start = start.split(':')
             start_hour = int(start[0])
@@ -106,7 +106,7 @@ def WIFI_connect(ssid, password):
     print("IP ADDRESS: " + iplist[0])
 
 def parseData(result):
-    global current_temp, current_hum, fan_speed, schedule, maxHumd, minHumd, maxTemp, minTemp
+    global current_temp, current_hum, fan_speed, schedule, maxHumd, minHumd, maxTemp, minTemp, trange_en, hrange_en
     print(result.decode())
     resultList = result.decode().split("/")
     print(resultList)
@@ -115,20 +115,26 @@ def parseData(result):
             fan_speed = int(s.split('=')[1])
             print("fan_speed = " + str(fan_speed))
         if "schedule=" in s:
-            schedule = s.split('=')[1]
+            schedule = eval(s.split('=')[1])
             print("schedule = " + str(schedule))
-        if "max_humid=" in s:
-            maxHumd = int(s.split('=')[1])
+        if "max_hum=" in s:
+            maxHumd = float(s.split('=')[1])
             print("maxHumd = " + str(maxHumd))
-        if "min_humid=" in s:
-            minHumd = int(s.split('=')[1])
+        if "min_hum=" in s:
+            minHumd = float(s.split('=')[1])
             print("minHumd = " + str(minHumd))
         if "max_temp=" in s:
-            maxTemp = int(s.split('=')[1])
+            maxTemp = float(s.split('=')[1])
             print("maxTemp = " + str(maxTemp))
         if "min_temp=" in s:
-            minTemp = int(s.split('=')[1])
+            minTemp = float(s.split('=')[1])
             print("minTemp = " + str(minTemp))
+        if "trange_en=" in s:
+            trange_en = float(s.split('=')[1])
+            print("minTemp = " + str(trange_en))
+        if "hrange_en=" in s:
+            hrange_en = float(s.split('=')[1])
+            print("minTemp = " + str(hrange_en))
     '''fan_speed = [s.split('=')[1] for s in resultList if "speed=" in s]
     schedule = [s.split('=')[1] for s in resultList if "schedule=" in s]
     maxHumd = [s.split('=')[1] for s in resultList if "max_humid=" in s]
@@ -167,10 +173,11 @@ fan_counter = 0
 sensor = dht.DHT22(Pin(14, Pin.IN, Pin.PULL_UP))
 schedule_count = 0
 schedule = []
-minHumd = 0
-maxHumd = 100000
-minTemp = 0
-maxTemp = 100000
+minHumd = 0.0
+maxHumd = 100000.0
+minTemp = 0.0
+maxTemp = 100000.0
+current_temp, current_hum = read_sensor(sensor)
 while(True):
     #print("WHILE----------------------------------")
     client, addr = s.accept()
@@ -189,8 +196,11 @@ while(True):
                 elif(fan_speed <= 0):
                     dc_motor.stop()
                 current_temp, current_hum = read_sensor(sensor)
-                client.send("HTTP/1.1 200 OK\nDate: Mon, 27 Jul 2009 12:28:53 GMT\nServer: Apache/2.2.14 (Win32)\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\nContent-Length: 88\nContent-Type: text/html\nConnection: Closed\n\ntemp={}/humidity={}/speed={}/schedule={}/maxHumd={}/minHumd{}/maxTemp={}/minTemp={}".format(current_temp, current_hum, fan_speed, schedule, maxHumd, minHumd, maxTemp, minTemp))
+                client.send("HTTP/1.1 200 OK\nDate: Mon, 27 Jul 2009 12:28:53 GMT\nServer: Apache/2.2.14 (Win32)\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\nContent-Length: 88\nContent-Type: text/html\nConnection: Closed\n\ntemp={}/humidity={}/speed={}/schedule={}/".format(current_temp, current_hum, fan_speed, schedule))
                 ### temp={}/humidity={}/speed={}/schedule={}/maxHumd={}/minHumd{}/maxTemp={}/minTemp={}, (temp, humd, speed, schedule, maxHumd, minHumd, maxTemp, minTemp)
+            else:
+                print(line)
+                client.send("HTTP/1.1 200 OK\nDate: Mon, 27 Jul 2009 12:28:53 GMT\nServer: Apache/2.2.14 (Win32)\nLast-Modified: Wed, 22 Jul 2009 19:15:56 GMT\nContent-Length: 88\nContent-Type: text/html\nConnection: Closed\n\ntemp={}/humidity={}/speed={}/schedule={}/".format(current_temp, current_hum, fan_speed, schedule))
     client.close()
         
         
@@ -200,7 +210,7 @@ while(True):
     year, month, day, weekday, hours, minutes, seconds, subseconds = rtc.datetime()
     
     schedule_toggle = fan_counter
-    if len(schedule) > 0 and schedule != []:
+    if len(schedule) > 0 and schedule != [] and False:
         fan_counter = schedule_control(schedule, hours*60+minutes)
     if schedule != []:
         print("schedule_control({},{}) = {}".format(schedule,hours*60+minutes,fan_counter))
@@ -212,18 +222,25 @@ while(True):
             fan_speed = 0
     
     current_temp, current_hum = read_sensor(sensor)
-    if current_temp > maxTemp:
+    print("Current temp: " + str(current_temp))
+    print("Current humidity: " + str(current_hum))
+    print("Current max_temp: " + str(maxTemp))
+    print("Current min_temp: " + str(minTemp))
+    print("Current max_hum: " + str(maxHumd))
+    print("Current min_hum: " + str(minHumd))
+    
+    if current_temp > maxTemp and trange_en == '1':
         # turn on fan
         if fan_speed == 0:
             fan_speed = 20
-    elif current_temp < minTemp:
+    elif current_temp < minTemp and trange_en == '1':
         # turn off fan
         fan_speed = 0
-    elif current_hum > maxHumd:
+    elif current_hum > maxHumd and hrange_en == '1':
         # turn on fan
         if fan_speed == 0:
             fan_speed = 20
-    elif current_hum < minHumd:
+    elif current_hum < minHumd and hrange_en == '1':
         # turn off fan
         fan_speed = 0   
     
